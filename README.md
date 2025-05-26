@@ -258,3 +258,8 @@ You are able to use an AMI with an ASG to make sure new instances launch faster 
 - Scaling Policies
 
 It is possible to scale an ASG based on CloudWatch alarms. An alarm monitors a metric (such as average CPU, memory, or a custom metric). Metrics such as average CPU are computed for the overall ASG instances. Based on the alarms, we can create scale out and scale in policies (increasing and decreasing the number of instances).
+
+Dynamic Scaling Policies:
+- Target Tracking Scaling: Simple to set up. Sets a target for a metric, e.g. I want the average ASG CPU to stay around 40%.
+- Simple / Step Scaling: Based on CloudWatch alarms. When a alarm is triggered (e.g. CPU > 70%), then add 2 units. When an alarm is triggered (e.g. CPU < 30%), then remove 1.
+- Scheduled Scaling: Anticipate a scaling based on known usage patterns. E.g. increase the min capacity to 10 on Friday at 5pm.
