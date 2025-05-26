@@ -341,3 +341,40 @@ Node Types:
 - AWS Fargate
     - No maintenance required; no nodes managed
     - Easiest to manage
+
+### Serverless in AWS
+- Serverless is a new paradigm where developers don't need to manage servers anymore, they just deploy code... they just deploy functions. Initially serverless was Function as a service. Pioneered by AWS Lambda but now includes anything that's managed; databases, messaging, storage, etc.
+- Serverless does not mean there are no servers! It means you don't have to manage/provision/see them.
+
+- AWS Lambda: Function as a service
+- DynamoDB: NoSQL Database
+- AWS Cognito: User authentication
+- API Gateway: Allows you to create and monitor APIs which interact with backend services
+- S3: Object storage
+- SNS and SQS: Notification service and message queueing services (Messaging)
+- Kinesis Data Firehose: Stream data
+- Aurora serverless: Database which autoscales based on demand
+- Step Functions: Manages and monitors workflows
+- Fargate: Serverless container service
+
+#### AWS Lambda
+- Virtual functions - no servers to manage!
+- Limited by time - short executions (15 mins max)
+- Run on-demand (only when needed - pay for time used only)
+- Scaling is automated!
+- Benefits:
+    - Easy pricing: Pay per request and compute time
+    - Integrates with the whole AWS suite of services
+    - Integrates with many programming languages
+    - Easy monitoring with CloudWatch
+    - Easy to get more resources per function (up to 10 GB)
+    - Increasing RAM will also improve CPU and network!
+- Supports:
+    - Node.js (JavaScript)
+    - Python
+    - Go
+    - Java
+    - C#
+    - Ruby
+    - Custom Runtime API
+    - Lambda Container Image: The container must implement the Lambda Runtime API. ECS/Fargate is preferred for running arbitrary Docker Images
