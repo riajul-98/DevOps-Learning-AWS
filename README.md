@@ -263,3 +263,81 @@ Dynamic Scaling Policies:
 - Target Tracking Scaling: Simple to set up. Sets a target for a metric, e.g. I want the average ASG CPU to stay around 40%.
 - Simple / Step Scaling: Based on CloudWatch alarms. When a alarm is triggered (e.g. CPU > 70%), then add 2 units. When an alarm is triggered (e.g. CPU < 30%), then remove 1.
 - Scheduled Scaling: Anticipate a scaling based on known usage patterns. E.g. increase the min capacity to 10 on Friday at 5pm.
+
+### Containers on AWS
+ECR is Amazons own container repository. It is a private repository. They also have a public repository named ECR Public Gallery. 
+
+AWS Container related services:
+- Amazon ECS: Elastic Container Service. Amazons own container platform. 
+- Amazon EKS: Elastic Kubernetes Service. Managd Kubernetes service (open source)
+- AWS Fargate: Serverless container platform. Works with both ECS and EKS
+- Amazon ECR: Container image repository.
+
+#### ECS - EC2 Launch Type
+- Launch Docker containers on AWS = Launch ECS Tasks on ECS Clasters
+- EC2 Launch Type: You must provide and maintain the infrastructure (EC2 instances)
+- Each EC2 instance must run the ECS agent to register in the ECS Cluster
+- AWS takes care of starting / stopping containers
+
+#### ECS - Fargate Launch Type
+- You do not provision infrastructure (no EC2 instances to manage)
+- Serverless
+- You just create task definitions
+- AWS just runs ECS tasks for you based on the CPU / RAM you need
+- To scale, increase the number of tasks
+
+#### ECS - IAM Roles
+- EC2 Instance Profile (For the EC2 Launch Type only):
+    - Used by the ECS agent
+    - Makes API calls to ECS service
+    - Sends container logs to CloudWatch logs
+    - Pull Docker image from ECR
+    - Reference sensitive data in Secrets Manager or SSM Parameter Store
+- ECS Task Role:
+    - Allows each task to have a specific role
+    - Use different roles for the different ECS services you run
+    - Defined in the task definition
+
+#### ECS - Load Balancer Integrations
+- ALB supported and works for most use cases.
+- NLB recommended for only high throughput/high performance use cases or to pair with AWS Private Link
+- CLB supported but not recommended. Lacks features.
+
+#### ECS Service Auto Scaling
+- Automatically increases/decreases the number of ECS tasks
+- ECS Auto Scaling uses AWS Application Auto Scaling
+    - ECS Service Average CPU Utilisation
+    - ECS Service Average Memory Utilisation - Scale on RAM
+    - ALB Request Count Per Target - Metric coming from ALB
+
+- Target Tracking - Scale based on target value for a specific Cloudwatch metric
+- Step Scaling - Scale based on a specific CloudWatch Alarm
+- Scheduled Scaling - Scale based on a specific date/time (predictable changes)
+
+- ECS Service Auto Scaling (task level) = EC2 Auto Scaling (EC2 Instance Level)
+- Fargate auto scaling is much easier to set up
+
+#### Amazon ECR
+ECR is Amazons own container repository, similar to DockerHub. It is a private repository. They also have a public repository named ECR Public Gallery. Allows you to store, manage and pull docker images directly from AWS. Integrates directly with ECS, backed by S3. Access is controlled through IAM. Supports image vulnerability scanning, versioning, image tags, image lifecycle
+
+#### Amazon EKS
+- A way to launch managed Kubernetes clusters on AWS
+- Alternative to ECS, similar goal but different API
+- Supports EC2 if you want to deploy worker nodes or Fargate to deploy serverless containers
+- Use case: If your company is already using Kubernetes on-premises or in another cloud and wants to migrate to AWS using Kubernetes.
+- For multiple regions, deploy one EKS cluster per region
+- Collect logs and metrics using CloudWatch Container Insights
+
+Node Types:
+- Managed Node Groups:
+    - Creates and manages nodes (EC2 instances) for you
+    - Nodes are part of an ASG managed by EKS
+    - Supports on-demand or spot instances
+- Self Managed Nodes:
+    - Nodes created by you and registered to the EKS cluster and managed by an ASG
+    - You can use pre-built AMI - Amazon EKS optimised AMI
+    - Supports on-demand or spot instances
+    - Better for more control and customisation
+- AWS Fargate
+    - No maintenance required; no nodes managed
+    - Easiest to manage
