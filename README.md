@@ -378,3 +378,97 @@ Node Types:
     - Ruby
     - Custom Runtime API
     - Lambda Container Image: The container must implement the Lambda Runtime API. ECS/Fargate is preferred for running arbitrary Docker Images
+
+## Amazon Networking
+
+### Default VPC
+- All new AWS accounts have a default VPC
+- New Ec2 instances are launched into the default VPC if no subnet is specified
+- Default VPC has internet connectivity and all EC2 instances inside it have public IPv4 addresses
+- We also get a public and a private IPv4 DNS name
+
+### Subnets (IPv4)
+- AWS reserves 5 IP addresses (the first 4 and last 1) in each subnet
+- These 5 addresses are not available for use and can't be assigned to an EC2 instance
+- Example: if CIDR block 10.0.0.0/24, then reserved IP addresses are:
+    - 10.0.0.0 - Network Address
+    - 10.0.0.1 - Reserved by AWS for the VPC router
+    - 10.0.0.2 - Reserved by AWS for mapping to Amazon-provided DNS (IP address of the DNS server)
+    - 10.0.0.3 - Reserved by AWS for future use
+    - 10.0.0.255 - Network broadcast address. AWS does not support broadcast in a VPC, therefore the address is reserved
+
+### Internet Gateway (IGW)
+- Allows resources in the VPC to connect to the internet
+- Scales horizontally and is highly available and redundant
+- Must be created separately from a VPC
+- One VPC can only be attached to one IGW and vice versa
+- IGWs on their own do not allow internet access
+- Route tables must also be updated
+
+### Bastion Hosts
+- Used to SSH into our private EC2 instances
+- Bastion is in a public subnet which then connected to all other private subnets
+- Bastion Host SG must allow inbound traffic from the internet on port 22 from restricted CIDR, e.g. the public CIDR of your corporation
+- SG of the EC2 instances must allow the SG of the bastion host or the private IP of the bastion host.
+
+### NAT Gateway
+- Allows instances in a private subnet to connect to the internet whilst blocking incoming traffic from the internet
+- AWS managed NAT, higher bandwidth, high availability, no admin
+- Pay per hour of usage and bandwidth
+- NATGW is created in a specific AZ, uses an elastic IP
+- Can't be used by EC2 instances in the same subnet (only from other subnets)
+- Requires an IGW (Private subnet => NATGW => IGW)
+- 5Gbps of bandwidth with automatic scaling up to 100Gbps
+- No SG to manage/required
+- If the AZ containing the NAT goes down, then all the resources in the other AZs will lose access to the internet. Solution for this is to have mutliple NAT gateways in multiple AZs. They are only highly available within an AZ.
+
+### Network Access Control Lists (NACL)
+- Like a firewall which control traffic from and to subnets
+- One NACL per subnet, new subnets are assigned the default NACL
+- You define NACL rules:
+    - Rules have a number (1-32766), lower numbers have higher priority
+    - First rule match will drive the decision
+    - The last rule is an asterisk and denies a request in case of no rule match
+    - AWS recommend adding rules by increment of 100
+- Newly created NACLs deny everything
+- Great way of blocking a specific IP address at the subnet level
+- They are stateless
+
+### VPC Peering
+- A way to connect two VPCs together,, privately with AWS's internal network.
+- The two VPCs behave as if they are part of the same network.
+- Must not have overlapping CIDRs
+- Not transitive (must be established for each VPC that need to communicate with one another)
+- You must update route tables in each VPC's subnet to ensure EC2 instances can communicate with each other
+- You can create VPC peering connections between VPCs in different accounts/regions
+- You can reference a SG in a perred VPC (works cross account - same region)
+
+### VPC Endpoints (AWS PrivateLink)
+- Every AWS service is publicly exposed (public URL)
+- VPC Endpoints (powered by AWS PrivateLink) allows you to connect to AWS services using a private network instead of using the public internet
+- They're redundant and scale horizontally
+- Remove the need for IGW, NATGW, ... to access AWS services
+- In case of issues:
+    - Check DNS setting resolution in your VPC
+    - Check route tables
+- Types of endpoints:
+    - Interface Endpoints (powered by PrivateLink):
+        - Provision an ENI (private IP address) as an entry point (must attach an SG)
+        - Supports most AWS services
+        - $ per hour + $ per GB of data processed
+    - Gateway Endpoints:
+        - Provisions a gateway and must be used as a target in a route table (does not need an SG)
+        - Supports both S3 and DynamoDB
+        - Free
+
+### IPv6 in AWS
+- IPv4 cannot be disabled for your VPC and subnets
+- You can enable IPv6 (they're public IP addresses) to operate in dual-stack mode
+- Your EC2 instances will get at least a private internal IPv4 and a public IPv6
+- They can communicate using either IPv4 or IPv6 to the internet through an IGW
+
+### Egress-only Internet Gateway
+- Used for IPv6 only
+- Similar to NATGW but for IPv6
+- Allow instances in your VPC outbound connections over IPv6 whilst preventing the internet to initiate an IPv6 connection to your instances.
+- You must update the route tables
