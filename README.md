@@ -472,3 +472,137 @@ Node Types:
 - Similar to NATGW but for IPv6
 - Allow instances in your VPC outbound connections over IPv6 whilst preventing the internet to initiate an IPv6 connection to your instances.
 - You must update the route tables
+
+## Amazon Route 53
+- AWS managed DNS service. A highly available, scalable and fully managed Authoritative DNS (The customer can update the DNS records).
+- Also a domain registrar
+- Ability to check the health of your resources
+- The only AWS service to provide 100% availability SLA
+
+### Route 53 Hosted Zones
+- A container for records that define how to route traffic to a domain and its subdomains
+- Public Hosted Zones: Contain records that specify how to route traffic on the internet
+- Private Hosted Zones: Contain records that specify how you route traffic within one or more VPCs
+
+### Route 53 Records
+- How you want to route traffic for a domain
+- Each record contains:
+    - Domain/subdomain name e.g. example.com
+    - Record type e.g. A or AAAA
+    - Value e.g. 12.34.56.78
+    - Routing Policy - How Route 53 responds to queries
+    - TTL - Amount of time the record cached at DNS resolver
+- Route 53 supports the following DNS record types:
+    - A/AAAA/CNAME/NS/CAA/DS/MX/NAPTR/PTR/SOA/TXT/SPF/SRV
+
+### Route 53 Record Types
+- A - Maps a hostname to IPv4
+- AAAA - Maps a hostname to IPv6
+- CNAME - Maps a hostname to another hostname
+    - The target is a domain which must have an A or AAAA record
+    - Can't create a CNAME record for the top node of a DNS namespace (Zone Apex)
+- NS - Name Servers for the hosted zone
+    - Control how traffic is routed for a domain
+
+### Route 53 TTL
+- High TTL e.g. 24 hours:
+    - Less traffic on Route 53
+    - Possibly outdated records
+- Low TTL e.g. 60 seconds:
+    - More traffic on route 53
+    - Easy to change records
+- Except for Alias records, TTL is mandatory for each DNS record.
+
+### CNAME vs Alias
+- AWS Resources expose an AWS hostname
+- CNAME:
+    - Point a hostname to any other hostname
+    - Only for non root domains
+- Alias:
+    - Point to an AWS resource
+    - Works for root and non root domains
+    - Free of charge
+    - Native health checks
+
+### Alias Records
+- Maps a hostname to an AWS resource
+- Extension to DNS functionality
+- Automatically recognises changes in the resources IP address
+- Unlike CNAME, it can be used for the top node of a DNS namespace
+- Always of type A/AAAA for AWS resouces
+- Cannot set the TTL
+- Targets include:
+    - ELB
+    - CloudFront Distributions
+    - API Gateway
+    - Elastic Beanstalk environments
+    - S3 websites
+    - VPC Interface Endpoints
+    - Global accelerator
+    - Route 53 records in the same hosted zone
+    - Cannot set an Alias record for an EC2 DNS name
+
+### Routing Policies:
+    - Simple
+    - Weighted
+    - Failover
+    - Latency Based
+    - Grolocation
+    - Multi-value answer
+    - Geoproximity
+
+#### Routing Policies - Simple
+- Routes traffic to a single instance
+- Can specify multiple values in the same record
+- If multiple values are returned, a random one is chosen by the client
+- When Alias is enabled, specify only one AWS resource
+- Can't be associated with health checks
+
+#### Routing Policies - Weighted
+- Controls the percentage of the requests that go to each specific resource
+- Assign each record a relative weight
+    - Traffic = weight for a specific record / sum of all the weights for all records
+    - Weights don't need to add up to 100
+- DNS records must have the same name and type
+- Can be associated with health checks
+- Assign a weight of 0 to a record to stop sending traffic to a resource
+- If all records have a weight of 0, then all records will be returned equally
+
+#### Routing Policies - Latency Based
+- Redirect the resource that has the least latency close to us
+- Super helpful when latency for users is a priority
+- Latency is based on traffic between users and AWS Regions
+- Can be associated with health checks (has failover capability)
+
+#### Route 53 Health Checks
+- HTTP health checks are only for public resources
+- Health checks => Automated DNS Failover
+    1. Health checks that monitor endpoints
+    2. Health checks that monitor other health checks
+    3. Health checks that monitor cloudwatch alarms
+- Integrated with CloudWatch metrics
+
+#### Routing Policies - Geolocation
+- Used to provide different content to users based on their location e.g. different languages, restricting content
+- Routing users based on user location
+- Specify location by continent, country, or state
+- Should create a default record
+- Can be associated with health checks
+
+#### Routing Policies - Geoproximity
+- Route traffic to your resources based on the geographic location of users and resources
+- Ability to shift more traffic to resources based on a defined bias
+- To change the size of the geographic region, specify bias values:
+    - To expand (1 to 99) more traffic to the region
+    - To shrink (-1 to -99) less traffic to the region
+- Resources can be:
+    - AWS resources
+    - Non-AWS resources
+- You must use Route 53 Traffic Flow to use this feature
+
+#### Routing Policies - IP based Routing
+- Routing is based on the clients IP address
+- You provide a list of CIDRs for your clients and the corresponding endpoints/locations
+
+#### Routing Policies - Multi-Value
+When you have multiple resources and want route 53 to return more than one resource in response to a query, you use multi-value routing policy. Can be associated with health checks. Up to 8 healthy records are returned for each multi-value query. Not a substitute to having an ELB
