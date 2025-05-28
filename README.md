@@ -606,3 +606,22 @@ Node Types:
 
 #### Routing Policies - Multi-Value
 When you have multiple resources and want route 53 to return more than one resource in response to a query, you use multi-value routing policy. Can be associated with health checks. Up to 8 healthy records are returned for each multi-value query. Not a substitute to having an ELB
+
+## Amazon CloudFront
+- CDN
+- Improves read performance, content is cached at the edge
+- Improves user experience
+- 216 Edge Locations worldwide
+- DDoS protection, integrated with Shield and WAF
+
+### CloudFront Origins
+- S3 Bucket
+    - For distributing files and caching them at the edge
+    - Enhance security with CloudFront Origin Access Control (OAC)
+    - OAC is a replacement for Origin Access Identity (OAI)
+    - CloudFront can be used as an ingress (to upload content)
+- Custom Origin (HTTP)
+    - ALB
+    - EC2 Instance
+    - S3 website (must first enable the bucket as a static S3 website)
+    - Any HTTP backend you want
